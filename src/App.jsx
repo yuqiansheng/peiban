@@ -657,28 +657,29 @@ function NightPage({ currentOwner, summaries, isSaving, onSave }) {
   return (
     <div className="page-stack">
       <section className="soft-card">
-        <SectionTitle icon={Moon} title="晚安小结" />
+        <SectionTitle icon={Moon} title="睡前碎碎念" />
+        <p className="night-guidance">睡前写两句，让 TA 知道你今天怎么样了</p>
         <SummaryField
           id="doneToday"
-          label="今天守住了什么"
+          label="今天我做到了..."
           value={draft.doneToday}
           onChange={(value) => updateField("doneToday", value)}
         />
         <SummaryField
           id="annoyingThing"
-          label="今天最烦的是什么"
+          label="今天的小烦恼"
           value={draft.annoyingThing}
           onChange={(value) => updateField("annoyingThing", value)}
         />
         <SummaryField
           id="minimumTomorrow"
-          label="明天保底做什么"
+          label="明天至少要做的一件事"
           value={draft.minimumTomorrow}
           onChange={(value) => updateField("minimumTomorrow", value)}
         />
         <button className="primary-button" type="button" disabled={isSaving} onClick={() => onSave(draft)}>
           <Sparkles size={18} />
-          写进今天
+          说晚安 🌙
         </button>
       </section>
 
@@ -686,7 +687,7 @@ function NightPage({ currentOwner, summaries, isSaving, onSave }) {
         <section className="soft-card note-card">
           <p className="eyebrow">{personLabel(otherSummary.owner)} 的晚安</p>
           <strong>{otherSummary.doneToday || "今天先好好收尾"}</strong>
-          <span>{otherSummary.minimumTomorrow ? `明天保底：${otherSummary.minimumTomorrow}` : ""}</span>
+          <span>{otherSummary.minimumTomorrow ? `明天至少：${otherSummary.minimumTomorrow}` : ""}</span>
         </section>
       ) : null}
     </div>
