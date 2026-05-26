@@ -2,10 +2,10 @@ export const appConfig = {
   api: {
     baseUrl: import.meta.env.VITE_API_BASE_URL || "",
   },
-  defaultRoomCode: import.meta.env.VITE_CABIN_ROOM_CODE || "our-cabin-2026",
+  defaultRoomCode: import.meta.env.VITE_CABIN_ROOM_CODE || "hanyue-2026",
   people: {
-    me: import.meta.env.VITE_CABIN_ME_NAME || "我",
-    ta: import.meta.env.VITE_CABIN_TA_NAME || "TA",
+    me: import.meta.env.VITE_CABIN_ME_NAME || "小狗 🐾",
+    ta: import.meta.env.VITE_CABIN_TA_NAME || "小月月 🌙",
   },
 };
 

@@ -303,11 +303,11 @@ function EntryGate({ onEnter }) {
           <House size={30} />
         </div>
         <p className="eyebrow">并肩小屋</p>
-        <h1>今天也来小屋啦</h1>
+        <h1>刘子涵和小月月的专属小屋</h1>
         <p className="entry-copy">不用很厉害，慢慢来也可以。</p>
 
         <label className="field-label" htmlFor="roomCode">
-          小屋口令
+          我们的小暗号
         </label>
         <input
           id="roomCode"
@@ -317,6 +317,7 @@ function EntryGate({ onEnter }) {
           autoComplete="off"
           inputMode="text"
         />
+        <p className="entry-hint">你和 TA 输入同样的暗号，就能进到同一间小屋</p>
 
         <div className="choice-grid" role="radiogroup" aria-label="选择身份">
           {OWNER_KEYS.map((key) => (
