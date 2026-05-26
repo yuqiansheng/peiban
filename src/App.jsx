@@ -474,8 +474,7 @@ function TasksPage({
         <section className="task-person" key={owner}>
           <div className="person-heading">
             <div>
-              <p className="eyebrow">{owner === currentOwner ? "我的任务" : `${personLabel(owner)} 的任务`}</p>
-              <h2>{owner === currentOwner ? "慢慢来清单" : "TA 的小安排"}</h2>
+              <p className="eyebrow">{personLabel(owner)} 的任务</p>
             </div>
           </div>
 
