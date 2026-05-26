@@ -212,6 +212,18 @@ function App() {
               )
             }
             onDelete={(task) => runCloudAction((repository) => repository.deleteTask(task._id))}
+            onSuggest={(task, suggestion) =>
+              runCloudAction((repository) =>
+                repository.addEncouragement(
+                  buildEncouragement({
+                    roomCode: session.roomCode,
+                    from: session.owner,
+                    to: task.owner,
+                    text: `关于「${task.text}」的小建议：${suggestion}`,
+                  }),
+                ),
+              )
+            }
           />
         ) : null}
 
@@ -467,6 +479,7 @@ function TasksPage({
   onToggleDone,
   onToggleDowngrade,
   onDelete,
+  onSuggest,
 }) {
   return (
     <div className="task-layout">
@@ -482,6 +495,7 @@ function TasksPage({
             <TaskTypeSection
               key={type.key}
               owner={owner}
+              currentOwner={currentOwner}
               type={type}
               tasks={groupedTasks[owner][type.key]}
               isSaving={isSaving}
@@ -489,6 +503,7 @@ function TasksPage({
               onToggleDone={onToggleDone}
               onToggleDowngrade={onToggleDowngrade}
               onDelete={onDelete}
+              onSuggest={onSuggest}
             />
           ))}
         </section>
@@ -499,6 +514,7 @@ function TasksPage({
 
 function TaskTypeSection({
   owner,
+  currentOwner,
   type,
   tasks,
   isSaving,
@@ -506,7 +522,10 @@ function TaskTypeSection({
   onToggleDone,
   onToggleDowngrade,
   onDelete,
+  onSuggest,
 }) {
+  const isOwn = owner === currentOwner;
+
   return (
     <div className="task-type-section">
       <div className="section-row">
@@ -515,9 +534,11 @@ function TaskTypeSection({
           <h3>{type.softLabel}</h3>
           <span>{type.hint}</span>
         </div>
-        <button className="small-icon-button" type="button" onClick={() => onAddTask(owner, type.key)}>
-          <Plus size={18} />
-        </button>
+        {isOwn ? (
+          <button className="small-icon-button" type="button" onClick={() => onAddTask(owner, type.key)}>
+            <Plus size={18} />
+          </button>
+        ) : null}
       </div>
 
       <div className="task-list">
@@ -526,10 +547,12 @@ function TaskTypeSection({
             <TaskCard
               key={task._id}
               task={task}
+              isOwnTask={isOwn}
               isSaving={isSaving}
               onToggleDone={onToggleDone}
               onToggleDowngrade={onToggleDowngrade}
               onDelete={onDelete}
+              onSuggest={onSuggest}
             />
           ))
         ) : (
@@ -540,30 +563,66 @@ function TaskTypeSection({
   );
 }
 
-function TaskCard({ task, isSaving, onToggleDone, onToggleDowngrade, onDelete }) {
+function TaskCard({ task, isOwnTask, isSaving, onToggleDone, onToggleDowngrade, onDelete, onSuggest }) {
   const done = task.status === "done";
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [suggestText, setSuggestText] = useState("");
+
+  const handleSuggest = () => {
+    if (!suggestText.trim()) return;
+    onSuggest(task, suggestText.trim());
+    setSuggestText("");
+    setShowSuggest(false);
+  };
 
   return (
-    <article className={`task-card ${done ? "is-done" : ""}`}>
-      <button
-        className="done-button"
-        type="button"
-        disabled={isSaving}
-        onClick={() => onToggleDone(task)}
-        aria-label={done ? "放回今天" : "写进今天"}
-      >
-        {done ? <Check size={18} /> : null}
-      </button>
+    <article className={`task-card ${done ? "is-done" : ""} ${!isOwnTask ? "is-readonly" : ""}`}>
+      {isOwnTask ? (
+        <button
+          className="done-button"
+          type="button"
+          disabled={isSaving}
+          onClick={() => onToggleDone(task)}
+          aria-label={done ? "放回今天" : "写进今天"}
+        >
+          {done ? <Check size={18} /> : null}
+        </button>
+      ) : null}
       <div className="task-body">
         <p>{task.text}</p>
         <div className="task-actions">
-          <button type="button" disabled={isSaving} onClick={() => onToggleDowngrade(task)}>
-            {task.downgradedToday ? "已降级" : "今日降级"}
-          </button>
-          <button type="button" disabled={isSaving} onClick={() => onDelete(task)}>
-            <Trash2 size={15} />
-            删除
-          </button>
+          {isOwnTask ? (
+            <>
+              <button type="button" disabled={isSaving} onClick={() => onToggleDowngrade(task)}>
+                {task.downgradedToday ? "已降级" : "今日降级"}
+              </button>
+              <button type="button" disabled={isSaving} onClick={() => onDelete(task)}>
+                <Trash2 size={15} />
+                删除
+              </button>
+            </>
+          ) : showSuggest ? (
+            <div className="suggest-inline">
+              <input
+                className="soft-input suggest-input"
+                value={suggestText}
+                onChange={(e) => setSuggestText(e.target.value)}
+                placeholder="写一点小建议..."
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") handleSuggest(); }}
+              />
+              <button className="suggest-submit" type="button" onClick={handleSuggest}>
+                发送
+              </button>
+              <button className="suggest-cancel" type="button" onClick={() => setShowSuggest(false)}>
+                取消
+              </button>
+            </div>
+          ) : (
+            <button className="suggest-button" type="button" onClick={() => setShowSuggest(true)}>
+              给建议
+            </button>
+          )}
         </div>
       </div>
     </article>

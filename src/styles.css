@@ -557,6 +557,64 @@ button:disabled {
   font-weight: 800;
 }
 
+.task-card.is-readonly {
+  opacity: 0.85;
+}
+
+.suggest-button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: #6d5348;
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: #f1edfb;
+  cursor: pointer;
+}
+
+.suggest-inline {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.suggest-input {
+  min-height: 36px;
+  border-radius: 14px;
+  padding: 0 12px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.suggest-submit {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 0;
+  color: #fffdf8;
+  font-weight: 800;
+  font-size: 0.82rem;
+  background: #c77b62;
+  cursor: pointer;
+}
+
+.suggest-cancel {
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 0;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.82rem;
+  background: transparent;
+  cursor: pointer;
+}
+
 .empty-text {
   margin: 0;
   color: var(--muted);
