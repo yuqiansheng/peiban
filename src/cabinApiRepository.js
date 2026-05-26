@@ -75,6 +75,11 @@ export function createCabinApiRepository({ fetchImpl = fetch, baseUrl = "" } = {
       });
     },
 
+    getMoods(roomCode, month) {
+      const params = new URLSearchParams({ roomCode, month });
+      return request(`/api/moods?${params.toString()}`);
+    },
+
     saveDailyStatus(payload) {
       return request("/api/daily-statuses", {
         method: "PUT",

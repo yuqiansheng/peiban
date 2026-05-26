@@ -344,6 +344,23 @@ async function saveDailyStatus(db, payload) {
   };
 }
 
+async function getMoods(db, url) {
+  const roomCode = requireText(url.searchParams.get("roomCode"), "roomCode");
+  const month = url.searchParams.get("month") || "";
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    throw new Error("month must be yyyy-mm");
+  }
+
+  const statuses = await all(
+    db,
+    "SELECT CAST(id AS TEXT) AS _id, roomCode, owner, date, mood, createdAt, updatedAt FROM daily_statuses WHERE roomCode = ? AND date LIKE ? || '-%'",
+    roomCode,
+    month,
+  );
+
+  return normalizeRows(statuses);
+}
+
 async function route(request, env) {
   if (!env.DB) {
     return json({ error: "Cloudflare D1 binding DB is missing" }, 500);
@@ -352,6 +369,10 @@ async function route(request, env) {
   const url = new URL(request.url);
   const parts = url.pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean);
   const [resource, id] = parts;
+
+  if (request.method === "GET" && resource === "moods") {
+    return json(await getMoods(env.DB, url));
+  }
 
   if (request.method === "GET" && resource === "state") {
     return json(await getState(env.DB, url));

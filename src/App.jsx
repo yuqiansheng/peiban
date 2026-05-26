@@ -46,6 +46,7 @@ const emptyData = {
   summaries: [],
   statuses: [],
   allSummaries: [],
+  monthMoods: [],
 };
 
 function loadSavedSession() {
@@ -89,8 +90,12 @@ function App() {
     try {
       const { repository } = await getCabinClient();
       await repository.ensureRoom(session.roomCode, appConfig.people);
-      const nextData = await repository.getTodayData(session.roomCode, today);
-      setData(nextData);
+      const month = today.slice(0, 7);
+      const [nextData, monthMoods] = await Promise.all([
+        repository.getTodayData(session.roomCode, today),
+        repository.getMoods(session.roomCode, month),
+      ]);
+      setData({ ...nextData, monthMoods });
     } catch (err) {
       setError(err.message || "小屋暂时没有连上云端");
     } finally {
@@ -435,6 +440,11 @@ function HomePage({ data, groupedTasks, currentOwner, currentStatus, isSaving, o
         </div>
       </section>
 
+      <MoodCalendar
+        statuses={data.monthMoods}
+        currentDate={getTodayKey()}
+      />
+
       <section className="soft-card">
         <SectionTitle icon={Sparkles} title="今日并肩" />
         <div className="overview-grid">
@@ -468,6 +478,80 @@ function OverviewTile({ label, value }) {
       <strong>{value}</strong>
       <span>{label}</span>
     </div>
+  );
+}
+
+const MOOD_EMOJI = { okay: "😊", tired: "😫", annoyed: "😤", rest: "😴" };
+const MOOD_TONE = { okay: "tone-warm", tired: "tone-leaf", annoyed: "tone-lavender", rest: "tone-soft" };
+
+function MoodCalendar({ statuses, currentDate }) {
+  const year = parseInt(currentDate.slice(0, 4), 10);
+  const month = parseInt(currentDate.slice(5, 7), 10);
+  const today = parseInt(currentDate.slice(8, 10), 10);
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
+
+  const moodMap = {};
+  (statuses || []).forEach((s) => {
+    if (!moodMap[s.date]) moodMap[s.date] = {};
+    moodMap[s.date][s.owner] = s.mood;
+  });
+
+  const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+
+  return (
+    <section className="soft-card">
+      <SectionTitle icon={Coffee} title="心情月历" />
+      <div className="mood-calendar">
+        <div className="calendar-header">
+          <span>{year} 年 {month} 月</span>
+        </div>
+        <div className="calendar-weekdays">
+          {weekdays.map((d) => (
+            <span key={d}>{d}</span>
+          ))}
+        </div>
+        <div className="calendar-grid">
+          {Array.from({ length: firstDayOfWeek }, (_, i) => (
+            <div className="cal-day empty" key={`e${i}`} />
+          ))}
+          {Array.from({ length: daysInMonth }, (_, i) => {
+            const day = i + 1;
+            const dateKey = `${currentDate.slice(0, 7)}-${String(day).padStart(2, "0")}`;
+            const dayMoods = moodMap[dateKey] || {};
+
+            return (
+              <div className={`cal-day ${day === today ? "is-today" : ""}`} key={day}>
+                <span className="cal-day-num">{day}</span>
+                <div className="cal-moods">
+                  {OWNER_KEYS.map((owner) => {
+                    const mood = dayMoods[owner];
+                    if (!mood) return null;
+                    return (
+                      <span
+                        key={owner}
+                        className={`cal-mood-dot ${MOOD_TONE[mood]}`}
+                        title={`${personLabel(owner)}: ${energyOptions.find((o) => o.key === mood)?.label || mood}`}
+                      >
+                        {MOOD_EMOJI[mood]}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="mood-legend">
+        {energyOptions.map((option) => (
+          <span className="mood-legend-item" key={option.key}>
+            {MOOD_EMOJI[option.key]} {option.label}
+          </span>
+        ))}
+      </div>
+    </section>
   );
 }
 
