@@ -969,3 +969,170 @@ button:disabled {
     font-size: 0.68rem;
   }
 }
+
+/* --- Paper Box & Animations --- */
+
+.paper-box-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 0;
+}
+
+.paper-box {
+  position: relative;
+  width: 100px;
+  height: 56px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.paper-box:hover {
+  transform: scale(1.06);
+}
+
+.paper-box-body {
+  width: 100%;
+  height: 56px;
+  border-radius: 6px 6px 14px 14px;
+  background: linear-gradient(135deg, #f2d4a2 0%, #eac68a 40%, #ddb878 100%);
+  box-shadow:
+    0 6px 16px rgba(180, 140, 100, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  position: relative;
+  border: 2px solid #d4a868;
+  border-top: 0;
+  overflow: hidden;
+}
+
+.paper-box-slot {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 62px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(139, 107, 68, 0.35);
+}
+
+.paper-box-lid {
+  width: 104px;
+  height: 16px;
+  margin-left: -2px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(135deg, #e0b878 0%, #d4a868 50%, #c89858 100%);
+  border: 2px solid #c89858;
+  border-bottom: 0;
+  transform-origin: bottom center;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  z-index: 2;
+}
+
+.paper-box.is-open .paper-box-lid {
+  transform: rotateX(115deg) translateY(-4px);
+}
+
+.paper-box-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #e87a6a;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 8px rgba(232, 122, 106, 0.45);
+  z-index: 1;
+}
+
+.paper-box-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Paper reveal (crumple → smooth) */
+
+.paper-reveal {
+  margin-top: 12px;
+}
+
+.paper-crumple-enter {
+  opacity: 0;
+  transform: scale(0.4) rotate(30deg);
+  filter: url(#crumple) blur(3px);
+}
+
+.paper-crumple-active {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  filter: blur(0);
+  transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Fly-out animation */
+
+@keyframes fly-to-box {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  60% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--fly-y, -120px)) scale(0.2) rotate(540deg);
+  }
+}
+
+.fly-out {
+  animation: fly-to-box 0.8s ease-in forwards;
+}
+
+/* Paper texture */
+
+.paper-texture {
+  position: relative;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 26px,
+      rgba(148, 119, 93, 0.07) 26px,
+      rgba(148, 119, 93, 0.07) 27px
+    ),
+    #fff8ea;
+  border: 1px solid rgba(148, 119, 93, 0.18);
+  border-radius: 3px 18px 18px 18px;
+  box-shadow:
+    2px 3px 8px rgba(119, 89, 62, 0.09),
+    inset 0 0 30px rgba(255, 255, 255, 0.25);
+}
+
+/* Message card extra styles */
+
+.message-card.paper-texture {
+  padding: 16px;
+}
+
+.message-card.paper-texture p {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+
+.message-card.paper-texture strong {
+  display: block;
+  font-size: 1rem;
+}

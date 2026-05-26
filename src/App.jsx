@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   Coffee,
@@ -715,13 +715,56 @@ function TaskCard({ task, isOwnTask, isSaving, onToggleDone, onToggleDowngrade, 
 
 function EncouragePage({ currentOwner, encouragements, isSaving, onSend }) {
   const [customText, setCustomText] = useState("");
+  const [boxOpen, setBoxOpen] = useState(false);
+  const [selectedMsg, setSelectedMsg] = useState(null);
+  const [flyingMsgId, setFlyingMsgId] = useState(null);
+  const boxRef = useRef(null);
+
+  const lastReadRef = useRef(
+    (() => {
+      try { return parseInt(localStorage.getItem("cabin-last-read-" + currentOwner) || "0", 10); }
+      catch { return 0; }
+    })()
+  );
+
+  const unreadMessages = encouragements.filter(
+    (e) => e.from !== currentOwner && new Date(e.createdAt).getTime() > lastReadRef.current
+  );
+  const unreadCount = unreadMessages.length;
+
+  const openBox = () => {
+    if (boxOpen) return;
+    setBoxOpen(true);
+    localStorage.setItem("cabin-last-read-" + currentOwner, String(Date.now()));
+    const unread = encouragements.filter(
+      (e) => e.from !== currentOwner && new Date(e.createdAt).getTime() > lastReadRef.current
+    );
+    if (unread.length) {
+      const random = unread[Math.floor(Math.random() * unread.length)];
+      setSelectedMsg(random);
+      setTimeout(() => setSelectedMsg(null), 3000);
+    }
+  };
+
+  const closeBox = () => {
+    setBoxOpen(false);
+    setSelectedMsg(null);
+  };
 
   const submitCustom = async () => {
-    if (!customText.trim()) {
-      return;
-    }
+    if (!customText.trim()) return;
+    const tempId = "fly-" + Date.now();
+    setFlyingMsgId(tempId);
     await onSend(customText);
     setCustomText("");
+    setTimeout(() => setFlyingMsgId(null), 900);
+  };
+
+  const handleQuickSend = async (text) => {
+    const tempId = "fly-" + Date.now();
+    setFlyingMsgId(tempId);
+    await onSend(text);
+    setTimeout(() => setFlyingMsgId(null), 900);
   };
 
   return (
@@ -730,7 +773,12 @@ function EncouragePage({ currentOwner, encouragements, isSaving, onSend }) {
         <SectionTitle icon={HeartHandshake} title="给 TA 打个气" />
         <div className="quick-grid">
           {quickEncouragements.map((text) => (
-            <button type="button" key={text} disabled={isSaving} onClick={() => onSend(text)}>
+            <button
+              type="button"
+              key={text}
+              disabled={isSaving}
+              onClick={() => handleQuickSend(text)}
+            >
               {text}
             </button>
           ))}
@@ -755,16 +803,66 @@ function EncouragePage({ currentOwner, encouragements, isSaving, onSend }) {
         </button>
       </section>
 
+      <section className="soft-card">
+        <SectionTitle icon={Mail} title="小信箱" />
+        <div className="paper-box-wrapper" ref={boxRef}>
+          <div
+            className={`paper-box ${boxOpen ? "is-open" : ""}`}
+            onClick={openBox}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter") openBox(); }}
+          >
+            <div className="paper-box-lid" />
+            <div className="paper-box-body">
+              <div className="paper-box-slot" />
+              {unreadCount > 0 && !boxOpen ? (
+                <span className="paper-box-badge">{unreadCount}</span>
+              ) : null}
+            </div>
+          </div>
+          <p className="paper-box-label">
+            {boxOpen ? "纸条打开啦 ✨" : unreadCount > 0 ? `有 ${unreadCount} 张新纸条 💌` : "还没有新纸条"}
+          </p>
+          {boxOpen ? (
+            <button className="ghost-button" type="button" onClick={closeBox}>
+              合上信箱
+            </button>
+          ) : null}
+        </div>
+
+        {boxOpen && selectedMsg ? (
+          <div className="paper-reveal">
+            <article className={`message-card paper-crumple-enter ${selectedMsg ? "paper-crumple-active" : ""}`}>
+              <p>
+                {relationLabel(selectedMsg.from, currentOwner)} 给 {relationLabel(selectedMsg.to, currentOwner)}
+              </p>
+              <strong>{selectedMsg.text}</strong>
+            </article>
+          </div>
+        ) : null}
+      </section>
+
       <section className="message-list">
         {encouragements.length ? (
-          encouragements.map((item) => (
-            <article className="message-card" key={item._id || item.createdAt}>
-              <p>
-                {relationLabel(item.from, currentOwner)} 给 {relationLabel(item.to, currentOwner)}
-              </p>
-              <strong>{item.text}</strong>
-            </article>
-          ))
+          encouragements.map((item) => {
+            const msgKey = item._id || item.createdAt;
+            const isFlying = flyingMsgId && (
+              encouragements[encouragements.length - 1] === item
+            );
+            return (
+              <article
+                className={`message-card paper-texture ${isFlying ? "fly-out" : ""}`}
+                key={msgKey}
+                style={isFlying ? { "--fly-x": "0px", "--fly-y": "-120px" } : undefined}
+              >
+                <p>
+                  {relationLabel(item.from, currentOwner)} 给 {relationLabel(item.to, currentOwner)}
+                </p>
+                <strong>{item.text}</strong>
+              </article>
+            );
+          })
         ) : (
           <div className="soft-card">
             <p className="empty-text">还没有小纸条，第一张可以很轻。</p>

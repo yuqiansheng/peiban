@@ -8,6 +8,12 @@
     <title>并肩小屋 · 子涵 & 小月月</title>
   </head>
   <body>
+    <svg width="0" height="0" style="position:absolute;visibility:hidden" aria-hidden="true">
+      <filter id="crumple">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
