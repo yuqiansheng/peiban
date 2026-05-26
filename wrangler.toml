@@ -1,0 +1,8 @@
+name = "side-by-side-cabin"
+compatibility_date = "2026-05-26"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "side-by-side-cabin"
+database_id = "488bb29f-2f7d-44c3-8b33-23920bd9a43f"

@@ -1,0 +1,29 @@
+{
+  "name": "side-by-side-cabin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "dev:cloudflare": "npm run build && wrangler pages dev dist --compatibility-date=2026-05-26 --port 8788",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:create": "wrangler d1 create side-by-side-cabin",
+    "db:migrate:local": "wrangler d1 execute DB --local --file schema.sql",
+    "db:migrate:remote": "wrangler d1 execute side-by-side-cabin --remote --file schema.sql",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name side-by-side-cabin"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.2.4",
+    "vitest": "^4.0.14",
+    "wrangler": "^4.94.0"
+  }
+}
