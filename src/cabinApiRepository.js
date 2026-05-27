@@ -28,7 +28,19 @@ export function createCabinApiRepository({ fetchImpl = fetch, baseUrl = "" } = {
     return readResponse(response);
   };
 
+  const withAuth = (payload = {}, auth = {}) => ({
+    ...payload,
+    ...auth,
+  });
+
   return {
+    authenticate(payload) {
+      return request("/api/session", {
+        method: "POST",
+        body: payload,
+      });
+    },
+
     ensureRoom(roomCode, people) {
       return request("/api/rooms", {
         method: "POST",
@@ -41,37 +53,45 @@ export function createCabinApiRepository({ fetchImpl = fetch, baseUrl = "" } = {
       return request(`/api/state?${params.toString()}`);
     },
 
-    addTask(payload) {
+    addTask(payload, auth) {
       return request("/api/tasks", {
         method: "POST",
-        body: payload,
+        body: withAuth(payload, auth),
       });
     },
 
-    updateTask(taskId, payload) {
+    updateTask(taskId, payload, auth) {
       return request(`/api/tasks/${encodeURIComponent(taskId)}`, {
         method: "PATCH",
-        body: payload,
+        body: withAuth(payload, auth),
       });
     },
 
-    deleteTask(taskId) {
+    deleteTask(taskId, auth) {
       return request(`/api/tasks/${encodeURIComponent(taskId)}`, {
         method: "DELETE",
+        body: withAuth({}, auth),
       });
     },
 
-    addEncouragement(payload) {
+    addTaskSuggestion(payload, auth) {
+      return request("/api/task-suggestions", {
+        method: "POST",
+        body: withAuth(payload, auth),
+      });
+    },
+
+    addEncouragement(payload, auth) {
       return request("/api/encouragements", {
         method: "POST",
-        body: payload,
+        body: withAuth(payload, auth),
       });
     },
 
-    saveDailySummary(payload) {
+    saveDailySummary(payload, auth) {
       return request("/api/daily-summaries", {
         method: "PUT",
-        body: payload,
+        body: withAuth(payload, auth),
       });
     },
 
@@ -80,10 +100,10 @@ export function createCabinApiRepository({ fetchImpl = fetch, baseUrl = "" } = {
       return request(`/api/moods?${params.toString()}`);
     },
 
-    saveDailyStatus(payload) {
+    saveDailyStatus(payload, auth) {
       return request("/api/daily-statuses", {
         method: "PUT",
-        body: payload,
+        body: withAuth(payload, auth),
       });
     },
   };

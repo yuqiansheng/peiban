@@ -68,9 +68,18 @@ function relationLabel(owner, currentOwner) {
   return personLabel(owner);
 }
 
+function sessionAuth(session) {
+  return {
+    actorOwner: session.owner,
+    pin: session.pin,
+  };
+}
+
 function App() {
   const savedSession = loadSavedSession();
-  const [session, setSession] = useState(savedSession?.roomCode && savedSession?.owner ? savedSession : null);
+  const [session, setSession] = useState(
+    savedSession?.roomCode && savedSession?.owner && savedSession?.pin ? savedSession : null,
+  );
   const [activeTab, setActiveTab] = useState("home");
   const [data, setData] = useState(emptyData);
   const [isLoading, setIsLoading] = useState(false);
@@ -157,6 +166,7 @@ function App() {
   const otherOwner = getOtherOwner(session.owner);
   const visibleEncouragements = byNewestCreatedAt(data.encouragements).slice(0, 16);
   const groupedTasks = groupTasksByOwnerAndType(data.tasks);
+  const auth = sessionAuth(session);
 
   return (
     <div className="app-shell">
@@ -181,14 +191,17 @@ function App() {
             onSaveEnergy={(mood) =>
               runCloudAction((repository) => {
                 const timestamp = new Date().toISOString();
-                return repository.saveDailyStatus({
-                  roomCode: session.roomCode,
-                  owner: session.owner,
-                  date: today,
-                  mood,
-                  createdAt: timestamp,
-                  updatedAt: timestamp,
-                });
+                return repository.saveDailyStatus(
+                  {
+                    roomCode: session.roomCode,
+                    owner: session.owner,
+                    date: today,
+                    mood,
+                    createdAt: timestamp,
+                    updatedAt: timestamp,
+                  },
+                  auth,
+                );
               })
             }
           />
@@ -202,30 +215,39 @@ function App() {
             onAddTask={(owner, type) => setTaskDrawer({ owner, type })}
             onToggleDone={(task) =>
               runCloudAction((repository) =>
-                repository.updateTask(task._id, {
-                  status: task.status === "done" ? "open" : "done",
-                  updatedAt: new Date().toISOString(),
-                }),
+                repository.updateTask(
+                  task._id,
+                  {
+                    status: task.status === "done" ? "open" : "done",
+                    updatedAt: new Date().toISOString(),
+                  },
+                  auth,
+                ),
               )
             }
             onToggleDowngrade={(task) =>
               runCloudAction((repository) =>
-                repository.updateTask(task._id, {
-                  downgradedToday: !task.downgradedToday,
-                  updatedAt: new Date().toISOString(),
-                }),
+                repository.updateTask(
+                  task._id,
+                  {
+                    downgradedToday: !task.downgradedToday,
+                    updatedAt: new Date().toISOString(),
+                  },
+                  auth,
+                ),
               )
             }
-            onDelete={(task) => runCloudAction((repository) => repository.deleteTask(task._id))}
+            onDelete={(task) => runCloudAction((repository) => repository.deleteTask(task._id, auth))}
             onSuggest={(task, suggestion) =>
               runCloudAction((repository) =>
-                repository.addEncouragement(
-                  buildEncouragement({
+                repository.addTaskSuggestion(
+                  {
                     roomCode: session.roomCode,
                     from: session.owner,
                     to: task.owner,
                     text: `关于「${task.text}」的小建议：${suggestion}`,
-                  }),
+                  },
+                  auth,
                 ),
               )
             }
@@ -246,6 +268,7 @@ function App() {
                     to: otherOwner,
                     text,
                   }),
+                  auth,
                 ),
               )
             }
@@ -266,6 +289,7 @@ function App() {
                     date: today,
                     ...draft,
                   }),
+                  auth,
                 ),
               )
             }
@@ -299,6 +323,7 @@ function App() {
                   text,
                   date: today,
                 }),
+                auth,
               );
               setTaskDrawer(null);
             })

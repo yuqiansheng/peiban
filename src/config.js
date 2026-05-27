@@ -4,8 +4,8 @@ export const appConfig = {
   },
   defaultRoomCode: import.meta.env.VITE_CABIN_ROOM_CODE || "hanyue-2026",
   people: {
-    me: import.meta.env.VITE_CABIN_ME_NAME || "小狗 🐾",
-    ta: import.meta.env.VITE_CABIN_TA_NAME || "小月月 🌙",
+    me: import.meta.env.VITE_CABIN_ME_NAME || "小涵涵",
+    ta: import.meta.env.VITE_CABIN_TA_NAME || "小越越",
   },
 };
 

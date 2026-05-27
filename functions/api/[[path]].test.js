@@ -54,6 +54,9 @@ function executeAll(tables, sql, values) {
   if (sql.includes("FROM rooms")) {
     return tables.rooms.filter((row) => row.roomCode === values[0]);
   }
+  if (sql.includes("FROM tasks") && sql.includes("WHERE id = ?")) {
+    return tables.tasks.filter((row) => row._id === String(values[0])).map((row) => ({ owner: row.owner }));
+  }
   if (sql.includes("FROM tasks")) {
     return tables.tasks.filter((row) => row.roomCode === values[0] && row.date === values[1]);
   }
@@ -180,7 +183,7 @@ function executeRun(tables, counters, sql, values) {
 async function callApi(db, request) {
   return onRequest({
     request,
-    env: { DB: db },
+    env: { DB: db, CABIN_ME_PIN: "1314", CABIN_TA_PIN: "5200" },
   });
 }
 
@@ -219,17 +222,25 @@ describe("Cloudflare cabin API", () => {
       date: "2026-05-26",
       createdAt: "2026-05-26T00:00:00.000Z",
       updatedAt: "2026-05-26T00:00:00.000Z",
+      actorOwner: "me",
+      pin: "1314",
     };
 
     const created = await callApi(db, createJsonRequest("/api/tasks", "POST", payload));
     expect(created.status).toBe(200);
     await expect(readJson(created)).resolves.toMatchObject({ _id: "1", text: "math" });
 
-    const updated = await callApi(db, createJsonRequest("/api/tasks/1", "PATCH", { status: "done" }));
+    const updated = await callApi(
+      db,
+      createJsonRequest("/api/tasks/1", "PATCH", { status: "done", actorOwner: "me", pin: "1314" }),
+    );
     expect(updated.status).toBe(200);
     expect(db.tables.tasks[0].status).toBe("done");
 
-    const deleted = await callApi(db, createJsonRequest("/api/tasks/1", "DELETE"));
+    const deleted = await callApi(
+      db,
+      createJsonRequest("/api/tasks/1", "DELETE", { actorOwner: "me", pin: "1314" }),
+    );
     expect(deleted.status).toBe(200);
     expect(db.tables.tasks).toEqual([]);
   });
@@ -248,6 +259,8 @@ describe("Cloudflare cabin API", () => {
         minimumTomorrow: "words",
         createdAt: "2026-05-26T00:00:00.000Z",
         updatedAt: "2026-05-26T00:00:00.000Z",
+        actorOwner: "ta",
+        pin: "5200",
       }),
     );
     await callApi(
@@ -259,6 +272,8 @@ describe("Cloudflare cabin API", () => {
         mood: "tired",
         createdAt: "2026-05-26T00:00:00.000Z",
         updatedAt: "2026-05-26T00:00:00.000Z",
+        actorOwner: "ta",
+        pin: "5200",
       }),
     );
 

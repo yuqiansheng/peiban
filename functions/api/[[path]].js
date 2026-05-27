@@ -1,6 +1,10 @@
 const OWNER_KEYS = new Set(["me", "ta"]);
 const TASK_TYPES = new Set(["plan", "sprint", "minimum"]);
 const MOODS = new Set(["okay", "tired", "annoyed", "rest"]);
+const PEOPLE = {
+  me: { fullName: "刘子涵", displayName: "小涵涵" },
+  ta: { fullName: "邢越迪", displayName: "小越越" },
+};
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -54,6 +58,44 @@ function requireMood(value) {
     throw new Error("mood is invalid");
   }
   return value;
+}
+
+function getExpectedPin(env, owner) {
+  if (owner === "me") {
+    return env.CABIN_ME_PIN || "1314";
+  }
+  return env.CABIN_TA_PIN || "5200";
+}
+
+function requireAuth(env, payload, targetOwner = payload?.owner) {
+  const actorOwner = requireOwner(payload?.actorOwner);
+  const pin = requireText(payload?.pin, "pin");
+
+  if (targetOwner && actorOwner !== targetOwner) {
+    throw new Error("只能修改自己的内容");
+  }
+
+  if (pin !== getExpectedPin(env, actorOwner)) {
+    throw new Error("PIN 不正确");
+  }
+
+  return actorOwner;
+}
+
+function authenticate(env, payload) {
+  const roomCode = requireText(payload.roomCode, "roomCode");
+  const owner = requireOwner(payload.owner);
+  const pin = requireText(payload.pin, "pin");
+
+  if (pin !== getExpectedPin(env, owner)) {
+    throw new Error("PIN 不正确");
+  }
+
+  return {
+    roomCode,
+    owner,
+    ...PEOPLE[owner],
+  };
 }
 
 async function readJson(request) {
@@ -187,9 +229,10 @@ async function getState(db, url) {
   };
 }
 
-async function addTask(db, payload) {
+async function addTask(db, env, payload) {
   const roomCode = requireText(payload.roomCode, "roomCode");
   const owner = requireOwner(payload.owner);
+  requireAuth(env, payload, owner);
   const type = requireTaskType(payload.type);
   const text = requireText(payload.text, "text");
   const status = payload.status === "done" ? "done" : "open";
@@ -226,7 +269,13 @@ async function addTask(db, payload) {
   };
 }
 
-async function updateTask(db, taskId, payload) {
+async function updateTask(db, env, taskId, payload) {
+  const existing = await first(db, "SELECT owner FROM tasks WHERE id = ?", taskId);
+  if (!existing) {
+    throw new Error("task not found");
+  }
+  requireAuth(env, payload, existing.owner);
+
   const status = payload.status === "done" ? "done" : payload.status === "open" ? "open" : null;
   const downgradedToday =
     typeof payload.downgradedToday === "boolean" ? (payload.downgradedToday ? 1 : 0) : null;
@@ -246,14 +295,21 @@ async function updateTask(db, taskId, payload) {
   return { ok: true };
 }
 
-async function deleteTask(db, taskId) {
+async function deleteTask(db, env, taskId, payload) {
+  const existing = await first(db, "SELECT owner FROM tasks WHERE id = ?", taskId);
+  if (!existing) {
+    throw new Error("task not found");
+  }
+  requireAuth(env, payload, existing.owner);
+
   await run(db, "DELETE FROM tasks WHERE id = ?", taskId);
   return { ok: true };
 }
 
-async function addEncouragement(db, payload) {
+async function addEncouragement(db, env, payload) {
   const roomCode = requireText(payload.roomCode, "roomCode");
   const from = requireOwner(payload.from);
+  requireAuth(env, payload, from);
   const to = requireOwner(payload.to);
   const text = requireText(payload.text, "text");
   const createdAt = payload.createdAt || nowIso();
@@ -278,9 +334,22 @@ async function addEncouragement(db, payload) {
   };
 }
 
-async function saveDailySummary(db, payload) {
+async function addTaskSuggestion(db, env, payload) {
+  return addEncouragement(db, env, {
+    roomCode: payload.roomCode,
+    from: payload.from,
+    to: payload.to,
+    text: payload.text,
+    createdAt: payload.createdAt,
+    actorOwner: payload.actorOwner,
+    pin: payload.pin,
+  });
+}
+
+async function saveDailySummary(db, env, payload) {
   const roomCode = requireText(payload.roomCode, "roomCode");
   const owner = requireOwner(payload.owner);
+  requireAuth(env, payload, owner);
   const date = requireDate(payload.date);
   const doneToday = optionalText(payload.doneToday);
   const annoyingThing = optionalText(payload.annoyingThing);
@@ -314,9 +383,10 @@ async function saveDailySummary(db, payload) {
   };
 }
 
-async function saveDailyStatus(db, payload) {
+async function saveDailyStatus(db, env, payload) {
   const roomCode = requireText(payload.roomCode, "roomCode");
   const owner = requireOwner(payload.owner);
+  requireAuth(env, payload, owner);
   const date = requireDate(payload.date);
   const mood = requireMood(payload.mood);
   const createdAt = payload.createdAt || nowIso();
@@ -378,34 +448,42 @@ async function route(request, env) {
     return json(await getState(env.DB, url));
   }
 
-  const payload = request.method === "GET" || request.method === "DELETE" ? null : await readJson(request);
+  const payload = request.method === "GET" ? null : await readJson(request);
+
+  if (request.method === "POST" && resource === "session") {
+    return json(authenticate(env, payload));
+  }
 
   if (request.method === "POST" && resource === "rooms") {
     return json(await ensureRoom(env.DB, payload));
   }
 
   if (request.method === "POST" && resource === "tasks") {
-    return json(await addTask(env.DB, payload));
+    return json(await addTask(env.DB, env, payload));
   }
 
   if (request.method === "PATCH" && resource === "tasks" && id) {
-    return json(await updateTask(env.DB, id, payload));
+    return json(await updateTask(env.DB, env, id, payload));
   }
 
   if (request.method === "DELETE" && resource === "tasks" && id) {
-    return json(await deleteTask(env.DB, id));
+    return json(await deleteTask(env.DB, env, id, payload));
   }
 
   if (request.method === "POST" && resource === "encouragements") {
-    return json(await addEncouragement(env.DB, payload));
+    return json(await addEncouragement(env.DB, env, payload));
+  }
+
+  if (request.method === "POST" && resource === "task-suggestions") {
+    return json(await addTaskSuggestion(env.DB, env, payload));
   }
 
   if (request.method === "PUT" && resource === "daily-summaries") {
-    return json(await saveDailySummary(env.DB, payload));
+    return json(await saveDailySummary(env.DB, env, payload));
   }
 
   if (request.method === "PUT" && resource === "daily-statuses") {
-    return json(await saveDailyStatus(env.DB, payload));
+    return json(await saveDailyStatus(env.DB, env, payload));
   }
 
   return notFound();
