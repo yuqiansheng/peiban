@@ -99,105 +99,25 @@ npm run dev
 
 但完整同步功能请用 `npm run dev:cloudflare`。
 
-## 部署到 Cloudflare
+## 部署
 
-### 1. 登录 Cloudflare
-
-打开你自己的 Cloudflare Dashboard，或者用命令行登录：
-
-```bash
-npx wrangler login
-```
-
-浏览器会打开授权页面，登录并允许 Wrangler 访问你的 Cloudflare 账号。
-
-### 2. 创建 D1 数据库
-
-运行：
-
-```bash
-npm run db:create
-```
-
-命令会输出类似这样的内容：
-
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "side-by-side-cabin"
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-```
-
-把输出里的 `database_id` 复制到 `wrangler.toml`，替换对应的值。
-
-注意：`binding` 必须叫 `DB`，代码里就是通过 `DB` 找数据库。
-
-### 3. 初始化线上数据库表
-
-运行：
-
-```bash
-npm run db:migrate:remote
-```
-
-这一步会把 `schema.sql` 里的表创建到 Cloudflare D1。
-
-### 4. 部署网站
-
-运行：
-
-```bash
-npm run deploy
-```
-
-成功后 Cloudflare 会给你一个网址，通常长这样：
-
-```text
-https://side-by-side-cabin.pages.dev
-```
-
-你和女朋友都打开这个网址，输入同一个小屋口令，就能看到同一份数据。
-
-## Cloudflare Dashboard 方式
-
-如果你不用命令行部署，也可以在 Dashboard 里创建 Pages 项目：
-
-1. 进入 Cloudflare Dashboard
-2. 打开 Workers & Pages
-3. 创建 Pages 项目
-4. 如果连接 Git 仓库，构建命令填：
+构建并部署到 Cloudflare Pages（main 分支）：
 
 ```bash
 npm run build
+npx wrangler pages deploy dist --project-name side-by-side-cabin --branch main
 ```
 
-5. 输出目录填：
-
-```text
-dist
-```
-
-6. 在 Pages 项目的 Settings 里找到 Functions / D1 bindings
-7. 添加 D1 binding：
-
-```text
-Variable name: DB
-D1 database: side-by-side-cabin
-```
-
-8. 重新部署一次
+部署完成后，你和女朋友打开小屋网址，输入同一个小屋口令就能看到同一份数据。
 
 ## 常用命令
 
 ```bash
 npm test                # 运行测试
-npm run build           # 构建前端
 npm run dev             # 仅前端开发
-npm run dev:cloudflare  # 完整 Cloudflare 本地预览
-npm run deploy          # 构建并部署到 Cloudflare Pages
-npm run db:create       # 创建 D1 数据库
-npm run db:migrate:local   # 本地 D1 初始化
-npm run db:migrate:remote  # 线上 D1 初始化
+npm run dev:cloudflare  # 完整 Cloudflare 本地预览（含 API + D1）
+npm run build           # 构建前端
+npx wrangler pages deploy dist --project-name side-by-side-cabin --branch main  # 部署到生产环境
 ```
 
 ## 数据表
