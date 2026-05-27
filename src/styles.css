@@ -117,6 +117,14 @@ button:disabled {
   line-height: 1.5;
 }
 
+.entry-error {
+  margin: 8px 0 0;
+  color: #b55449;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: #a2785d;
@@ -280,6 +288,10 @@ button:disabled {
 .page-stack {
   display: grid;
   gap: 14px;
+}
+
+.page-stack > .message-list {
+  order: 4;
 }
 
 .hero-card,
@@ -976,15 +988,27 @@ button:disabled {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 10px 0 0;
+  gap: 16px;
+  min-height: 172px;
+  padding: 20px 0 8px;
+  overflow: visible;
+}
+
+.soft-card:has(.paper-box-wrapper) {
+  order: 2;
+  overflow: visible;
+}
+
+.soft-card:has(#encouragement) {
+  order: 3;
 }
 
 .paper-box {
   position: relative;
-  width: 100px;
-  height: 56px;
+  width: 116px;
+  height: 76px;
   cursor: pointer;
+  perspective: 280px;
   transition: transform 0.3s ease;
 }
 
@@ -994,9 +1018,12 @@ button:disabled {
 
 .paper-box-body {
   width: 100%;
-  height: 56px;
+  height: 62px;
+  margin-top: 14px;
   border-radius: 6px 6px 14px 14px;
-  background: linear-gradient(135deg, #f2d4a2 0%, #eac68a 40%, #ddb878 100%);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.22), transparent 34%),
+    linear-gradient(135deg, #f1d19b 0%, #e7bd7d 44%, #d6a962 100%);
   box-shadow:
     0 6px 16px rgba(180, 140, 100, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -1006,23 +1033,62 @@ button:disabled {
   overflow: hidden;
 }
 
+.paper-box-body::before,
+.paper-box-body::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 30px;
+  background: linear-gradient(28deg, transparent 49%, rgba(120, 83, 45, 0.17) 50%, transparent 52%);
+  pointer-events: none;
+}
+
+.paper-box-body::after {
+  background: linear-gradient(-28deg, transparent 49%, rgba(255, 255, 255, 0.32) 50%, transparent 52%);
+}
+
 .paper-box-slot {
   position: absolute;
-  top: 8px;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  width: 62px;
+  width: 70px;
   height: 3px;
   border-radius: 2px;
   background: rgba(139, 107, 68, 0.35);
+  z-index: 3;
+}
+
+.paper-box-paper {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 68px;
+  height: 42px;
+  border: 1px solid rgba(149, 112, 75, 0.22);
+  border-radius: 3px 10px 8px 5px;
+  background:
+    linear-gradient(90deg, rgba(150, 116, 82, 0.08) 1px, transparent 1px) 12px 0 / 16px 100%,
+    repeating-linear-gradient(0deg, transparent 0 10px, rgba(147, 116, 83, 0.09) 10px 11px),
+    linear-gradient(145deg, #fffdf4, #f8e9cb);
+  box-shadow: 0 4px 9px rgba(117, 82, 47, 0.16);
+  transform: translate(-50%, 10px) rotate(-2deg);
+  transition: transform 0.55s ease, opacity 0.3s ease;
+  z-index: 1;
 }
 
 .paper-box-lid {
-  width: 104px;
-  height: 16px;
-  margin-left: -2px;
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 122px;
+  height: 20px;
   border-radius: 6px 6px 0 0;
-  background: linear-gradient(135deg, #e0b878 0%, #d4a868 50%, #c89858 100%);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.22), transparent 44%),
+    linear-gradient(135deg, #e0b878 0%, #d4a868 50%, #c89858 100%);
   border: 2px solid #c89858;
   border-bottom: 0;
   transform-origin: bottom center;
@@ -1032,7 +1098,12 @@ button:disabled {
 }
 
 .paper-box.is-open .paper-box-lid {
-  transform: rotateX(115deg) translateY(-4px);
+  transform: rotateX(118deg) translateY(-6px);
+}
+
+.paper-box.is-open .paper-box-paper {
+  opacity: 0.96;
+  transform: translate(-50%, -22px) rotate(-4deg);
 }
 
 .paper-box-badge {
@@ -1064,7 +1135,9 @@ button:disabled {
 /* Paper reveal (crumple → smooth) */
 
 .paper-reveal {
-  margin-top: 12px;
+  position: relative;
+  z-index: 2;
+  margin-top: 0;
 }
 
 .paper-crumple-enter {
@@ -1104,7 +1177,11 @@ button:disabled {
 
 .paper-texture {
   position: relative;
+  overflow: hidden;
   background:
+    radial-gradient(circle at 18% 22%, rgba(149, 116, 82, 0.13) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 78% 68%, rgba(149, 116, 82, 0.11) 0 1px, transparent 1.8px),
+    linear-gradient(108deg, transparent 0 48%, rgba(131, 95, 65, 0.08) 49%, transparent 51%),
     repeating-linear-gradient(
       0deg,
       transparent,
@@ -1116,8 +1193,32 @@ button:disabled {
   border: 1px solid rgba(148, 119, 93, 0.18);
   border-radius: 3px 18px 18px 18px;
   box-shadow:
+    0 10px 22px rgba(119, 89, 62, 0.1),
     2px 3px 8px rgba(119, 89, 62, 0.09),
-    inset 0 0 30px rgba(255, 255, 255, 0.25);
+    inset 0 0 28px rgba(255, 255, 255, 0.34),
+    inset 12px 0 16px rgba(166, 125, 83, 0.04);
+}
+
+.paper-texture::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 34px;
+  height: 34px;
+  background:
+    linear-gradient(135deg, rgba(198, 152, 88, 0.28), rgba(255, 248, 225, 0.92) 54%, transparent 56%);
+  border-bottom-left-radius: 8px;
+  box-shadow: -2px 2px 6px rgba(112, 81, 54, 0.09);
+}
+
+.paper-texture::after {
+  content: "";
+  position: absolute;
+  inset: 8px 10px;
+  border: 1px solid rgba(146, 112, 76, 0.08);
+  border-radius: 2px 12px 13px 10px;
+  pointer-events: none;
 }
 
 /* Message card extra styles */

@@ -75,6 +75,20 @@ function sessionAuth(session) {
   };
 }
 
+export function buildEntrySession({ roomCode, owner, pin }) {
+  const trimmedPin = pin?.trim() || "";
+
+  if (!trimmedPin) {
+    throw new Error("请先输入小屋 PIN");
+  }
+
+  return {
+    roomCode: roomCode.trim() || appConfig.defaultRoomCode,
+    owner,
+    pin: trimmedPin,
+  };
+}
+
 function App() {
   const savedSession = loadSavedSession();
   const [session, setSession] = useState(
@@ -334,13 +348,40 @@ function App() {
   );
 }
 
-function EntryGate({ onEnter }) {
+export function EntryGate({ onEnter }) {
   const [roomCode, setRoomCode] = useState(appConfig.defaultRoomCode);
   const [owner, setOwner] = useState("me");
+  const [pin, setPin] = useState("");
+  const [entryError, setEntryError] = useState("");
+  const [isEntering, setIsEntering] = useState(false);
+
+  const handleEnter = async (event) => {
+    event.preventDefault();
+    setEntryError("");
+
+    let nextSession;
+    try {
+      nextSession = buildEntrySession({ roomCode, owner, pin });
+    } catch (err) {
+      setEntryError(err.message);
+      return;
+    }
+
+    setIsEntering(true);
+    try {
+      const { repository } = await getCabinClient();
+      const authenticated = await repository.authenticate(nextSession);
+      onEnter({ ...authenticated, pin: nextSession.pin });
+    } catch (err) {
+      setEntryError(err.message || "小屋 PIN 不正确");
+    } finally {
+      setIsEntering(false);
+    }
+  };
 
   return (
     <main className="entry-screen">
-      <section className="entry-card">
+      <form className="entry-card" onSubmit={handleEnter}>
         <div className="cabin-badge">
           <House size={30} />
         </div>
@@ -376,15 +417,29 @@ function EntryGate({ onEnter }) {
           ))}
         </div>
 
+        <label className="field-label" htmlFor="pin">
+          小屋 PIN
+        </label>
+        <input
+          id="pin"
+          className="soft-input"
+          type="password"
+          value={pin}
+          onChange={(event) => setPin(event.target.value)}
+          autoComplete="current-password"
+          inputMode="numeric"
+        />
+        {entryError ? <p className="entry-error">{entryError}</p> : null}
+
         <button
           className="primary-button"
-          type="button"
-          onClick={() => onEnter({ roomCode: roomCode.trim() || appConfig.defaultRoomCode, owner })}
+          type="submit"
+          disabled={isEntering}
         >
           <Sparkles size={18} />
           进小屋
         </button>
-      </section>
+      </form>
     </main>
   );
 }
@@ -841,6 +896,7 @@ function EncouragePage({ currentOwner, encouragements, isSaving, onSend }) {
             <div className="paper-box-lid" />
             <div className="paper-box-body">
               <div className="paper-box-slot" />
+              <div className="paper-box-paper" />
               {unreadCount > 0 && !boxOpen ? (
                 <span className="paper-box-badge">{unreadCount}</span>
               ) : null}
@@ -858,7 +914,7 @@ function EncouragePage({ currentOwner, encouragements, isSaving, onSend }) {
 
         {boxOpen && selectedMsg ? (
           <div className="paper-reveal">
-            <article className={`message-card paper-crumple-enter ${selectedMsg ? "paper-crumple-active" : ""}`}>
+            <article className={`message-card paper-texture paper-crumple-enter ${selectedMsg ? "paper-crumple-active" : ""}`}>
               <p>
                 {relationLabel(selectedMsg.from, currentOwner)} 给 {relationLabel(selectedMsg.to, currentOwner)}
               </p>
