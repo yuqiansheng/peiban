@@ -59,7 +59,7 @@ button:disabled {
   width: min(100%, 920px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 18px 16px calc(104px + env(safe-area-inset-bottom));
+  padding: 18px 16px calc(148px + env(safe-area-inset-bottom));
 }
 
 .entry-screen {
@@ -180,6 +180,7 @@ button:disabled {
 .choice-pill,
 .energy-chip,
 .quick-grid button,
+.message-type-grid button,
 .ghost-button,
 .task-actions button {
   min-height: 46px;
@@ -314,10 +315,140 @@ button:disabled {
   overflow: hidden;
 }
 
+.room-hero {
+  position: relative;
+  min-height: 212px;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(249, 216, 167, 0.72), transparent 28%),
+    linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(238, 244, 237, 0.88));
+}
+
+.room-hero::after {
+  content: "";
+  position: absolute;
+  right: 28px;
+  bottom: 22px;
+  width: 54px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(199, 184, 232, 0.28);
+  filter: blur(1px);
+}
+
 .hero-card h2 {
   max-width: 12ch;
   font-size: 1.95rem;
   line-height: 1.14;
+}
+
+.room-hero-copy {
+  display: block;
+  max-width: 18ch;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.warm-room {
+  position: relative;
+  flex: 0 0 132px;
+  height: 142px;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.76), rgba(255, 239, 214, 0.9)),
+    linear-gradient(90deg, transparent 0 48%, rgba(171, 129, 94, 0.14) 49% 51%, transparent 52%);
+  box-shadow:
+    inset 0 0 0 1px rgba(148, 119, 93, 0.14),
+    0 16px 28px rgba(119, 89, 62, 0.1);
+}
+
+.room-window {
+  position: absolute;
+  top: 22px;
+  left: 18px;
+  width: 48px;
+  height: 42px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 5px;
+  border-radius: 14px;
+  background: #dfeaf0;
+  box-shadow: inset 0 0 0 2px rgba(255, 253, 248, 0.84);
+}
+
+.room-window span {
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fff7c9, #dce8ef);
+}
+
+.room-lamp {
+  position: absolute;
+  right: 22px;
+  top: 34px;
+  width: 34px;
+  height: 44px;
+  border-radius: 18px 18px 12px 12px;
+  background: linear-gradient(180deg, #ffe7a6, #f4be7c);
+  box-shadow:
+    0 0 24px rgba(255, 215, 129, 0.68),
+    inset 0 -8px 12px rgba(174, 119, 70, 0.14);
+}
+
+.room-lamp::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  bottom: -26px;
+  width: 6px;
+  height: 28px;
+  border-radius: 999px;
+  background: #bf8a62;
+}
+
+.room-rug {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  left: 22px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #f5c9c2, #eadff8, #d9ead4);
+  opacity: 0.88;
+}
+
+.room-growth-card {
+  display: grid;
+  gap: 14px;
+}
+
+.room-decoration-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.room-decoration {
+  min-height: 78px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(148, 119, 93, 0.12);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(255, 246, 229, 0.78));
+}
+
+.room-decoration strong {
+  color: #7b5a47;
+  font-size: 1.35rem;
+}
+
+.room-decoration span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
 }
 
 .mini-cabin {
@@ -375,6 +506,7 @@ button:disabled {
 
 .energy-grid,
 .quick-grid,
+.message-type-grid,
 .overview-grid {
   display: grid;
   gap: 10px;
@@ -392,6 +524,18 @@ button:disabled {
 .energy-chip.is-selected {
   outline: 3px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 0 0 5px rgba(199, 123, 98, 0.18);
+}
+
+.mood-chip-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.64);
+  color: #7b5a47;
+  font-size: 0.78rem;
 }
 
 .tone-warm {
@@ -663,6 +807,10 @@ button:disabled {
   gap: 8px;
 }
 
+.task-card.is-readonly .task-actions {
+  display: none;
+}
+
 .task-actions button {
   min-height: 40px;
   display: inline-flex;
@@ -741,19 +889,32 @@ button:disabled {
   grid-template-columns: 1fr 1fr;
 }
 
-.quick-grid button {
+.message-type-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.quick-grid button,
+.message-type-grid button {
   padding: 0 12px;
   color: #6d5348;
   font-weight: 850;
   background: #fff2d9;
 }
 
-.quick-grid button:nth-child(2n) {
+.quick-grid button:nth-child(2n),
+.message-type-grid button:nth-child(2n) {
   background: #f1edfb;
 }
 
-.quick-grid button:nth-child(3n) {
+.quick-grid button:nth-child(3n),
+.message-type-grid button:nth-child(3n) {
   background: #eaf4e5;
+}
+
+.message-type-grid button.is-selected {
+  border-color: rgba(199, 123, 98, 0.36);
+  background: #ffe8d5;
+  box-shadow: 0 0 0 4px rgba(199, 123, 98, 0.12);
 }
 
 .message-card {
@@ -934,7 +1095,7 @@ button:disabled {
 
 @media (min-width: 720px) {
   .app-main {
-    padding: 24px 28px calc(112px + env(safe-area-inset-bottom));
+    padding: 24px 28px calc(132px + env(safe-area-inset-bottom));
   }
 
   .page-stack,
@@ -973,6 +1134,7 @@ button:disabled {
   }
 
   .quick-grid,
+  .message-type-grid,
   .energy-grid {
     grid-template-columns: 1fr;
   }

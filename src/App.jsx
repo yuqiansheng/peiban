@@ -14,7 +14,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { appConfig, energyOptions, quickEncouragements } from "./config";
+import { appConfig, energyOptions, messageTypes } from "./config";
 import { getCabinClient, isCabinApiConfigured } from "./cabinClient";
 import {
   buildEncouragement,
@@ -32,12 +32,11 @@ import {
 
 const SESSION_KEY = "side-by-side-cabin-session";
 
-const tabs = [
-  { key: "home", label: "首页", icon: Home },
-  { key: "tasks", label: "任务", icon: ListChecks },
-  { key: "encourage", label: "鼓劲", icon: HeartHandshake },
-  { key: "night", label: "晚安", icon: Moon },
-  { key: "cabin", label: "小屋", icon: House },
+export const tabs = [
+  { key: "room", label: "小屋", icon: House },
+  { key: "today", label: "今日", icon: ListChecks },
+  { key: "mailbox", label: "信箱", icon: Mail },
+  { key: "memories", label: "回忆", icon: Moon },
 ];
 
 const emptyData = {
@@ -94,7 +93,7 @@ function App() {
   const [session, setSession] = useState(
     savedSession?.roomCode && savedSession?.owner && savedSession?.pin ? savedSession : null,
   );
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState("room");
   const [data, setData] = useState(emptyData);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -169,7 +168,7 @@ function App() {
     localStorage.removeItem(SESSION_KEY);
     setSession(null);
     setData(emptyData);
-    setActiveTab("home");
+    setActiveTab("room");
   };
 
   if (!session) {
@@ -195,7 +194,7 @@ function App() {
         {error ? <Notice message={error} /> : null}
         {!isCabinApiConfigured() ? <SetupNotice /> : null}
 
-        {activeTab === "home" ? (
+        {activeTab === "room" ? (
           <HomePage
             data={data}
             groupedTasks={groupedTasks}
@@ -221,7 +220,7 @@ function App() {
           />
         ) : null}
 
-        {activeTab === "tasks" ? (
+        {activeTab === "today" ? (
           <TasksPage
             groupedTasks={groupedTasks}
             currentOwner={session.owner}
@@ -268,7 +267,7 @@ function App() {
           />
         ) : null}
 
-        {activeTab === "encourage" ? (
+        {activeTab === "mailbox" ? (
           <EncouragePage
             currentOwner={session.owner}
             encouragements={visibleEncouragements}
@@ -289,7 +288,7 @@ function App() {
           />
         ) : null}
 
-        {activeTab === "night" ? (
+        {activeTab === "today" ? (
           <NightPage
             currentOwner={session.owner}
             summaries={data.summaries}
@@ -310,7 +309,7 @@ function App() {
           />
         ) : null}
 
-        {activeTab === "cabin" ? (
+        {activeTab === "memories" ? (
           <CabinPage
             data={data}
             currentOwner={session.owner}
@@ -479,6 +478,13 @@ function SetupNotice() {
 }
 
 function HomePage({ data, groupedTasks, currentOwner, currentStatus, isSaving, onSaveEnergy }) {
+  const doneTasks = data.tasks.filter((task) => task.status === "done").length;
+  const guardedDays = countGuardedDays(data.allSummaries);
+  const roomDecorations = [
+    { label: "点亮的小星星", value: doneTasks },
+    { label: "收到的小纸条", value: data.encouragements.length },
+    { label: "守住的小日子", value: guardedDays },
+  ];
   const summaries = OWNER_KEYS.map((owner) => ({
     owner,
     label: relationLabel(owner, currentOwner),
@@ -487,22 +493,36 @@ function HomePage({ data, groupedTasks, currentOwner, currentStatus, isSaving, o
 
   return (
     <div className="page-stack">
-      <section className="hero-card">
+      <section className="hero-card room-hero">
         <div>
-          <p className="eyebrow">今天也来小屋啦</p>
-          <h2>不用很厉害，慢慢来也可以。</h2>
+          <p className="eyebrow">今天的小房间</p>
+          <h2>{currentStatus ? "小灯已经亮起来了" : "先留下今天的小天气"}</h2>
+          <span className="room-hero-copy">这里不用表现得很厉害，慢慢来也可以。</span>
         </div>
-        <div className="mini-cabin" aria-hidden="true">
-          <div className="mini-cabin-roof" />
-          <div className="mini-cabin-body">
+        <div className="warm-room" aria-hidden="true">
+          <div className="room-window">
             <span />
             <span />
           </div>
+          <div className="room-lamp" />
+          <div className="room-rug" />
+        </div>
+      </section>
+
+      <section className="soft-card room-growth-card">
+        <SectionTitle icon={Sparkles} title="小屋慢慢变好" />
+        <div className="room-decoration-grid">
+          {roomDecorations.map((item) => (
+            <div className="room-decoration" key={item.label}>
+              <strong>{item.value}</strong>
+              <span>{item.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
       <section className="soft-card">
-        <SectionTitle icon={Coffee} title="今日电量" />
+        <SectionTitle icon={Coffee} title="今日小天气" />
         <div className="energy-grid">
           {energyOptions.map((option) => (
             <button
@@ -514,6 +534,7 @@ function HomePage({ data, groupedTasks, currentOwner, currentStatus, isSaving, o
                 currentStatus?.mood === option.key ? "is-selected" : ""
               }`}
             >
+              <span className="mood-chip-icon">{moodGlyph(option.key)}</span>
               {option.label}
             </button>
           ))}
@@ -564,6 +585,38 @@ function OverviewTile({ label, value }) {
 const MOOD_EMOJI = { okay: "😊", tired: "😫", annoyed: "😤", rest: "😴" };
 const MOOD_TONE = { okay: "tone-warm", tired: "tone-leaf", annoyed: "tone-lavender", rest: "tone-soft" };
 
+function moodGlyph(key) {
+  return (
+    {
+      joyful: "★",
+      tired: "☁",
+      annoyed: "雨",
+      hug: "抱",
+      quiet: "月",
+      okay: "猫",
+      silent: "云",
+    }[key] ||
+    MOOD_EMOJI[key] ||
+    "·"
+  );
+}
+
+function moodTone(key) {
+  return (
+    {
+      joyful: "tone-warm",
+      tired: "tone-leaf",
+      annoyed: "tone-lavender",
+      hug: "tone-warm",
+      quiet: "tone-soft",
+      okay: "tone-leaf",
+      silent: "tone-soft",
+    }[key] ||
+    MOOD_TONE[key] ||
+    "tone-soft"
+  );
+}
+
 function MoodCalendar({ statuses, currentDate }) {
   const year = parseInt(currentDate.slice(0, 4), 10);
   const month = parseInt(currentDate.slice(5, 7), 10);
@@ -611,10 +664,10 @@ function MoodCalendar({ statuses, currentDate }) {
                     return (
                       <span
                         key={owner}
-                        className={`cal-mood-dot ${MOOD_TONE[mood]}`}
+                        className={`cal-mood-dot ${moodTone(mood)}`}
                         title={`${personLabel(owner)}: ${energyOptions.find((o) => o.key === mood)?.label || mood}`}
                       >
-                        {MOOD_EMOJI[mood]}
+                        {moodGlyph(mood)}
                       </span>
                     );
                   })}
@@ -627,7 +680,7 @@ function MoodCalendar({ statuses, currentDate }) {
       <div className="mood-legend">
         {energyOptions.map((option) => (
           <span className="mood-legend-item" key={option.key}>
-            {MOOD_EMOJI[option.key]} {option.label}
+            {moodGlyph(option.key)} {option.label}
           </span>
         ))}
       </div>
@@ -795,10 +848,12 @@ function TaskCard({ task, isOwnTask, isSaving, onToggleDone, onToggleDowngrade, 
 
 function EncouragePage({ currentOwner, encouragements, isSaving, onSend }) {
   const [customText, setCustomText] = useState("");
+  const [messageType, setMessageType] = useState(messageTypes[0].key);
   const [boxOpen, setBoxOpen] = useState(false);
   const [selectedMsg, setSelectedMsg] = useState(null);
   const [flyingMsgId, setFlyingMsgId] = useState(null);
   const boxRef = useRef(null);
+  const selectedMessageType = messageTypes.find((item) => item.key === messageType) || messageTypes[0];
 
   const lastReadRef = useRef(
     (() => {
@@ -835,31 +890,26 @@ function EncouragePage({ currentOwner, encouragements, isSaving, onSend }) {
     if (!customText.trim()) return;
     const tempId = "fly-" + Date.now();
     setFlyingMsgId(tempId);
-    await onSend(customText);
+    await onSend(`${selectedMessageType.prefix}${customText}`);
     setCustomText("");
-    setTimeout(() => setFlyingMsgId(null), 900);
-  };
-
-  const handleQuickSend = async (text) => {
-    const tempId = "fly-" + Date.now();
-    setFlyingMsgId(tempId);
-    await onSend(text);
     setTimeout(() => setFlyingMsgId(null), 900);
   };
 
   return (
     <div className="page-stack">
       <section className="soft-card">
-        <SectionTitle icon={HeartHandshake} title="给 TA 打个气" />
-        <div className="quick-grid">
-          {quickEncouragements.map((text) => (
+        <SectionTitle icon={Mail} title="选一张信纸" />
+        <div className="message-type-grid" role="radiogroup" aria-label="选择纸条类型">
+          {messageTypes.map((type) => (
             <button
               type="button"
-              key={text}
-              disabled={isSaving}
-              onClick={() => handleQuickSend(text)}
+              key={type.key}
+              className={messageType === type.key ? "is-selected" : ""}
+              aria-checked={messageType === type.key}
+              role="radio"
+              onClick={() => setMessageType(type.key)}
             >
-              {text}
+              {type.label}
             </button>
           ))}
         </div>
@@ -978,8 +1028,8 @@ function NightPage({ currentOwner, summaries, isSaving, onSave }) {
   return (
     <div className="page-stack">
       <section className="soft-card">
-        <SectionTitle icon={Moon} title="睡前碎碎念" />
-        <p className="night-guidance">睡前写两句，让 TA 知道你今天怎么样了</p>
+        <SectionTitle icon={Moon} title="睡前小夜灯" />
+        <p className="night-guidance">不用总结得很完整，给今天留一盏小灯就好。</p>
         <SummaryField
           id="doneToday"
           label="今天我做到了..."
@@ -1000,7 +1050,7 @@ function NightPage({ currentOwner, summaries, isSaving, onSave }) {
         />
         <button className="primary-button" type="button" disabled={isSaving} onClick={() => onSave(draft)}>
           <Sparkles size={18} />
-          说晚安 🌙
+          收藏这一刻
         </button>
       </section>
 

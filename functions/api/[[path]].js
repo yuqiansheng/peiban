@@ -1,6 +1,6 @@
 const OWNER_KEYS = new Set(["me", "ta"]);
 const TASK_TYPES = new Set(["plan", "sprint", "minimum"]);
-const MOODS = new Set(["okay", "tired", "annoyed", "rest"]);
+const MOODS = new Set(["joyful", "tired", "annoyed", "hug", "quiet", "okay", "silent"]);
 const PEOPLE = {
   me: { fullName: "刘子涵", displayName: "小涵涵" },
   ta: { fullName: "邢越迪", displayName: "小越越" },

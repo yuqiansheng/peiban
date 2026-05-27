@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { buildEntrySession, EntryGate } from "./App.jsx";
+import { buildEntrySession, EntryGate, tabs } from "./App.jsx";
 import { appConfig } from "./config";
 
 describe("EntryGate", () => {
@@ -17,5 +17,11 @@ describe("EntryGate", () => {
       owner: "me",
       pin: "1314",
     });
+  });
+});
+
+describe("room navigation", () => {
+  it("keeps the app focused on four gentle room areas", () => {
+    expect(tabs.map((tab) => tab.label)).toEqual(["小屋", "今日", "信箱", "回忆"]);
   });
 });

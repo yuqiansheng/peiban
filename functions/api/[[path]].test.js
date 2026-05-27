@@ -282,6 +282,25 @@ describe("Cloudflare cabin API", () => {
     expect(db.tables.daily_statuses[0].mood).toBe("tired");
   });
 
+  it("accepts the expanded gentle room mood set", async () => {
+    const db = createMemoryDb();
+
+    const response = await callApi(
+      db,
+      createJsonRequest("/api/daily-statuses", "PUT", {
+        roomCode: "our-cabin-2026",
+        owner: "me",
+        date: "2026-05-26",
+        mood: "hug",
+        actorOwner: "me",
+        pin: "1314",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(db.tables.daily_statuses[0].mood).toBe("hug");
+  });
+
   it("rejects invalid requests with a 400 response", async () => {
     const db = createMemoryDb();
 
